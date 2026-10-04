@@ -25,16 +25,13 @@ Two shapes, pick the one that fits:
   already owns its request shape/decoding and only needs the retry ladder moved
   to the caller.
 
-### Credentials
+### Fetching
 
-The module is private, so fetching needs:
-
-```
-GOPRIVATE=github.com/wayyt-tian/*
-```
-
-plus git credentials for `github.com` (with an SSH key:
-`git config --global url."git@github.com:".insteadOf "https://github.com/"`).
+This module is **public**. Consumers need no `GOPRIVATE`, no token, and no
+special git config: `go get github.com/wayyt-tian/tfdapi-sdk@vX.Y.Z` resolves
+through the configured module proxy like any other dependency. It carries the
+retry ladder and an HTTP client only — no credentials, no business logic, no
+tfdapi internals.
 
 ## Versioning
 
