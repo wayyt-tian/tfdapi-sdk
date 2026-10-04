@@ -1,0 +1,60 @@
+version: "2"
+
+run:
+  timeout: 5m
+  go: "1.26"
+
+# 解除默认截断（max-issues-per-linter: 50 / max-same-issues: 3）。
+# 0 = 不限（pkg/result/processors/max_from_linter.go: `if p.limit <= 0`）。
+#
+# 为什么现在敢解除：CI 用 only-new-issues，而 golangci-lint 的处理器顺序里
+# diff 过滤排在两个上限之前（pkg/lint/runner.go: NewDiff 在 107 行，
+# NewMaxSameIssues/NewMaxFromLinter 在 115/116 行），所以上限作用在
+# "本次新引入的" 那一小撮 findings 上，而不是全仓 1536 条。
+#
+# 为什么必须解除：上限不会让门禁变绿（有 1 条就 exit 1），但会让报告撒谎。
+# 最要命的是 max-same-issues 按 issue.Text 去重，而 gofmt 的文案恒为
+# "File is not properly formatted" —— 一次加了 10 个未格式化文件只会报 3 个，
+# 修完再推又冒 3 个。存量 164 里 gofmt 恰好卡在 3、revive/unused 恰好卡在 50，
+# 就是被这两条上限削出来的。
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - revive
+    - bodyclose
+    - rowserrcheck
+    - sqlclosecheck
+  settings:
+    misspell:
+      # 千川 spells this metric "shop_estimated_comission_cost" — one m — and
+      # that spelling is the wire contract, confirmed in ad_open_sdk_go
+      # (model_qianchuan_uni_promotion_list_v1_0_fields.go) as well as in the
+      # topic's own config/get catalog. misspell ships "comission" in its
+      # dictionary, so without this it would demand we "fix" a field name into
+      # one 千川 does not answer to.
+      ignore-rules:
+        - comission
+    revive:
+      rules:
+        - name: exported
+        - name: unused-parameter
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+          - bodyclose
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
